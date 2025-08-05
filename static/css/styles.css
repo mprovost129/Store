@@ -1,0 +1,57 @@
+body {
+    font-family: 'Chief Blueprint' !important;
+}
+
+.header-container {
+    position: sticky;
+    left: 0;
+    top: 0;
+    right: 0;
+    border: 2px solid black;
+    height: 84px;
+    background-color: lightgray;
+    z-index: 10;
+}
+
+.header {
+    height: 80px;
+    margin-left: 100px;
+    margin-right: 100px;
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.logo-container {
+    width: 16.667%;
+    display: flex;
+    align-items: center;
+    height: 70px;
+}
+
+.logo-href {
+    display: flex;
+    align-items: center;
+    height: 70px;
+    width: 106.5px;
+    background-color: white;
+    border: 1px solid black;
+    border-radius: 10px;
+}
+
+.logo {
+
+    height: 60px;
+    margin-left: 5px;
+    margin-right: 5px;
+}
+
+.login-container {
+    width: 16.667%;
+    height: 70px;
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: flex-end
+}
