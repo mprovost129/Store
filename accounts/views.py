@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from .forms import RegistrationForm, UserForm, UserProfileForm
 from .models import Account, UserProfile
+from orders.models import Order, OrderProduct
 from django.contrib import messages, auth
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
@@ -16,6 +17,7 @@ from django.core.mail import EmailMessage
 from carts.views import _cart_id
 from carts.models import Cart, CartItem
 import requests
+
 
 def register(request):
     if request.method == 'POST':
@@ -57,6 +59,7 @@ def register(request):
         'form': form,
     }
     return render(request, 'accounts/register.html', context)
+
 
 def login(request):
     if request.method == 'POST':
@@ -122,11 +125,13 @@ def login(request):
             return redirect('login')
     return render(request, 'accounts/login.html')
 
+
 @login_required(login_url = 'login')
 def logout(request):
     auth.logout(request)
     messages.success(request, 'You are logged out.')
     return redirect('login')
+
 
 def activate(request, uidb64, token):
     try:
@@ -143,10 +148,20 @@ def activate(request, uidb64, token):
     else:
         messages.error(request, 'Invalid activation link')
         return redirect('register')
-    
+
+
 @login_required(login_url = 'login')
 def dashboard(request):
-    return render(request, 'accounts/dashboard.html')
+    orders = Order.objects.order_by('-created_at').filter(user_id=request.user.id, is_ordered=True)
+    orders_count = orders.count()
+
+    #userprofile = UserProfile.objects.get(user_id=request.user.id)
+    context = {
+        'orders_count': orders_count,
+        #'userprofile': userprofile,
+    }
+    return render(request, 'accounts/dashboard.html', context)
+
 
 def forgot_password(request):
     if request.method == 'POST':
@@ -174,6 +189,7 @@ def forgot_password(request):
             return redirect('forgot_password')
     return render(request, 'accounts/forgot_password.html')
 
+
 def resetpassword_validate(request, uidb64, token):
     try:
         uid = urlsafe_base64_decode(uidb64).decode()
@@ -188,7 +204,8 @@ def resetpassword_validate(request, uidb64, token):
     else:
         messages.error(request, 'This link has been expired!')
         return redirect('login')
-    
+
+
 def reset_password(request):
     if request.method == 'POST':
         password = request.POST['password']
@@ -206,7 +223,17 @@ def reset_password(request):
             return redirect('reset_password')
     else:
         return render(request, 'accounts/reset_password.html')
-    
+
+
+@login_required(login_url='login')
+def my_orders(request):
+    orders = Order.objects.filter(user=request.user, is_ordered=True).order_by('-created_at')
+    context = {
+        'orders': orders,
+    }
+    return render(request, 'accounts/my_orders.html', context)
+
+
 @login_required(login_url='login')
 def edit_profile(request):
     userprofile = get_object_or_404(UserProfile, user=request.user)
@@ -227,6 +254,7 @@ def edit_profile(request):
         'userprofile': userprofile,
     }
     return render(request, 'accounts/edit_profile.html', context)
+
 
 @login_required(login_url='login')
 def change_password(request):
@@ -252,3 +280,19 @@ def change_password(request):
             messages.error(request, 'Password does not match!')
             return redirect('change_password')
     return render(request, 'accounts/change_password.html')
+
+
+@login_required(login_url='login')
+def order_detail(request, order_id):
+    order_detail = OrderProduct.objects.filter(order__order_number=order_id)
+    order = Order.objects.get(order_number=order_id)
+    subtotal = 0
+    for i in order_detail:
+        subtotal += i.product_price * i.quantity
+
+    context = {
+        'order_detail': order_detail,
+        'order': order,
+        'subtotal': subtotal,
+    }
+    return render(request, 'accounts/order_detail.html', context)
